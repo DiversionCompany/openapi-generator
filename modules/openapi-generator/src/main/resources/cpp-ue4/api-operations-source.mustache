@@ -318,7 +318,13 @@ void {{classname}}::{{operationIdCamelCase}}Response::SetHttpResponseCode(EHttpR
 bool {{classname}}::{{operationIdCamelCase}}Response::FromJson(const TSharedPtr<FJsonValue>& JsonValue)
 {
 	{{#returnType}}
+	{{#vendorExtensions.x-support-http-file-input}}
+	// Content is a file, no available JSON conversion
+	return false;
+	{{/vendorExtensions.x-support-http-file-input}}
+	{{^vendorExtensions.x-support-http-file-input}}
 	return TryGetJsonValue(JsonValue, Content);
+	{{/vendorExtensions.x-support-http-file-input}}
 	{{/returnType}}
 	{{^returnType}}
 	return true;

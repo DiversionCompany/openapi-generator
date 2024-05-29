@@ -46,11 +46,18 @@ public:
 	{{/description}}{{^required}}TOptional<{{/required}}{{{dataType}}}{{^required}}>{{/required}} {{paramName}}{{#required}}{{#defaultValue}} = {{{.}}}{{/defaultValue}}{{/required}};
 	{{/isEnum}}
     {{/allParams}}
+	{{#vendorExtensions.x-support-http-file-input}}
+	/* A path to the file in which to store response data. */
+	FString ResponseFilePath;
+	{{/vendorExtensions.x-support-http-file-input}}
 };
 
 class {{dllapi}} {{classname}}::{{operationIdCamelCase}}Response : public Response
 {
 public:
+	{{#vendorExtensions.x-support-http-file-input}}
+	{{operationIdCamelCase}}Response(const FString& InResponseFilePath) : Content(InResponseFilePath) {}
+	{{/vendorExtensions.x-support-http-file-input}}
     virtual ~{{operationIdCamelCase}}Response() {}
 	{{#responses.0}}
 	void SetHttpResponseCode(EHttpResponseCodes::Type InHttpResponseCode) final;

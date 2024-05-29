@@ -91,7 +91,7 @@ void {{classname}}::HandleResponse(FHttpResponsePtr HttpResponse, bool bSucceede
 		FString ContentType = HttpResponse->GetContentType();
 		FString Content;
 
-		if (ContentType.IsEmpty())
+		if (ContentType.IsEmpty() || HttpResponse->GetContentLength() == 0)
 		{
 			return; // Nothing to parse
 		}
@@ -141,14 +141,14 @@ FHttpRequestPtr {{classname}}::{{operationIdCamelCase}}(const {{operationIdCamel
 
 	Request.SetupHttpRequest(HttpRequest);
 
-	HttpRequest->OnProcessRequestComplete().BindRaw(this, &{{classname}}::On{{operationIdCamelCase}}Response, Delegate);
+	HttpRequest->OnProcessRequestComplete().BindRaw(this, &{{classname}}::On{{operationIdCamelCase}}Response, Delegate{{#vendorExtensions.x-support-http-file-input}}, Request.ResponseFilePath{{/vendorExtensions.x-support-http-file-input}});
 	HttpRequest->ProcessRequest();
 	return HttpRequest;
 }
 
-void {{classname}}::On{{operationIdCamelCase}}Response(FHttpRequestPtr HttpRequest, FHttpResponsePtr HttpResponse, bool bSucceeded, F{{operationIdCamelCase}}Delegate Delegate) const
+void {{classname}}::On{{operationIdCamelCase}}Response(FHttpRequestPtr HttpRequest, FHttpResponsePtr HttpResponse, bool bSucceeded, F{{operationIdCamelCase}}Delegate Delegate{{#vendorExtensions.x-support-http-file-input}}, const FString InResponseFilePath{{/vendorExtensions.x-support-http-file-input}}) const
 {
-	{{operationIdCamelCase}}Response Response;
+	{{operationIdCamelCase}}Response Response{{#vendorExtensions.x-support-http-file-input}}(InResponseFilePath){{/vendorExtensions.x-support-http-file-input}};
 	HandleResponse(HttpResponse, bSucceeded, Response);
 	Delegate.ExecuteIfBound(Response);
 }

@@ -38,7 +38,7 @@ public:
 	{{/description}}FHttpRequestPtr {{operationIdCamelCase}}(const {{operationIdCamelCase}}Request& Request, const F{{operationIdCamelCase}}Delegate& Delegate = F{{operationIdCamelCase}}Delegate()) const;
     {{/operation}}{{/operations}}
 private:
-    {{#operations}}{{#operation}}void On{{operationIdCamelCase}}Response(FHttpRequestPtr HttpRequest, FHttpResponsePtr HttpResponse, bool bSucceeded, F{{operationIdCamelCase}}Delegate Delegate) const;
+    {{#operations}}{{#operation}}void On{{operationIdCamelCase}}Response(FHttpRequestPtr HttpRequest, FHttpResponsePtr HttpResponse, bool bSucceeded, F{{operationIdCamelCase}}Delegate Delegate{{#vendorExtensions.x-support-http-file-input}}, const FString InResponseFilePath{{/vendorExtensions.x-support-http-file-input}}) const;
     {{/operation}}{{/operations}}
 	FHttpRequestRef CreateHttpRequest(const Request& Request) const;
 	bool IsValid() const;

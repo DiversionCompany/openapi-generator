@@ -16,6 +16,7 @@
 
 package org.openapitools.codegen.languages;
 
+import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.media.ArraySchema;
 import io.swagger.v3.oas.models.media.Schema;
 import org.openapitools.codegen.CodegenConstants;
@@ -40,6 +41,8 @@ public class CppUE4ClientCodegen extends AbstractCppCodegen {
     public static final String UNREAL_MODULE_NAME = "unrealModuleName";
     public static final String UNREAL_MODULE_NAME_DESC = "Name of the generated unreal module (optional)";
     public static final String OPTIONAL_PROJECT_FILE_DESC = "Generate Build.cs";
+    public static final String STRING_STREAM_HTTP_FILE_DOWNLOAD = "streamHttpFileInput";
+    public static final String STREAM_HTTP_FILE_INPUT_DESC = "Save stream data downloaded from endpoint in a string";
 
     protected String unrealModuleName = "OpenAPI";
     // Will be treated as pointer
@@ -53,6 +56,7 @@ public class CppUE4ClientCodegen extends AbstractCppCodegen {
     protected Set<String> systemIncludes = new HashSet<>();
     protected String cppNamespace = unrealModuleName;
     protected boolean optionalProjectFileFlag = true;
+    protected boolean optionStreamHttpFileInput = false;
 
     public CppUE4ClientCodegen() {
         super();
@@ -114,6 +118,7 @@ public class CppUE4ClientCodegen extends AbstractCppCodegen {
         addOption(CPP_NAMESPACE, CPP_NAMESPACE_DESC, this.cppNamespace);
         addOption(UNREAL_MODULE_NAME, UNREAL_MODULE_NAME_DESC, this.unrealModuleName);
         addSwitch(CodegenConstants.OPTIONAL_PROJECT_FILE, OPTIONAL_PROJECT_FILE_DESC, this.optionalProjectFileFlag);
+        addSwitch(STRING_STREAM_HTTP_FILE_DOWNLOAD, STREAM_HTTP_FILE_INPUT_DESC, this.optionStreamHttpFileInput);
 
         /*
          * Additional Properties.  These values can be passed to the templates and
@@ -273,6 +278,10 @@ public class CppUE4ClientCodegen extends AbstractCppCodegen {
     @SuppressWarnings("unused")
     public void postProcessParameter(CodegenParameter parameter) {
         super.postProcessParameter(parameter);
+        // Convert HttpFileInput parameter types to string to enable data streaming
+        if(this.optionStreamHttpFileInput && "HttpFileInput".equals(parameter.dataType)) {
+            parameter.dataType = typeMapping.get("string");
+        }
         // Nullable will be handled as optional
         parameter.required = !parameter.notRequiredOrIsNullable();
     }
@@ -585,5 +594,18 @@ public class CppUE4ClientCodegen extends AbstractCppCodegen {
     @Override
     public String toSetter(String name) {
         return "Set" + getterAndSetterCapitalize(name);
+    }
+
+    @Override
+    protected void handleMethodResponse(Operation operation,
+                                   Map<String, Schema> schemas,
+                                   CodegenOperation op,
+                                   ApiResponse methodResponse,
+                                   Map<String, String> schemaMappings){
+        super.handleMethodResponse(operation, schemas, op, methodResponse, schemaMappings);
+        if ("HttpFileInput".equals(op.returnType)) {
+            addHeaders(methodResponse, op.responseHeaders);
+            op.vendorExtensions.put("x-support-http-file-input", true);
+        }
     }
 }
