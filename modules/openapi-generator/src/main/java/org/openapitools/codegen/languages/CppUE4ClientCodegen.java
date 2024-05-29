@@ -16,24 +16,31 @@
 
 package org.openapitools.codegen.languages;
 
-import io.swagger.v3.oas.models.Operation;
-import io.swagger.v3.oas.models.media.ArraySchema;
-import io.swagger.v3.oas.models.media.Schema;
+import java.io.File;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+
 import org.openapitools.codegen.CodegenConstants;
-import org.openapitools.codegen.CodegenType;
 import org.openapitools.codegen.CodegenModel;
+import org.openapitools.codegen.CodegenOperation;
 import org.openapitools.codegen.CodegenParameter;
 import org.openapitools.codegen.CodegenProperty;
 import org.openapitools.codegen.CodegenResponse;
+import org.openapitools.codegen.CodegenType;
 import org.openapitools.codegen.SupportingFile;
 import org.openapitools.codegen.meta.GeneratorMetadata;
 import org.openapitools.codegen.meta.Stability;
 import org.openapitools.codegen.utils.ModelUtils;
-
-import java.io.File;
-import java.util.*;
-
 import static org.openapitools.codegen.utils.StringUtils.camelize;
+
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.responses.ApiResponse;
 
 public class CppUE4ClientCodegen extends AbstractCppCodegen {
     public static final String CPP_NAMESPACE = "cppNamespace";
@@ -119,6 +126,8 @@ public class CppUE4ClientCodegen extends AbstractCppCodegen {
         addOption(UNREAL_MODULE_NAME, UNREAL_MODULE_NAME_DESC, this.unrealModuleName);
         addSwitch(CodegenConstants.OPTIONAL_PROJECT_FILE, OPTIONAL_PROJECT_FILE_DESC, this.optionalProjectFileFlag);
         addSwitch(STRING_STREAM_HTTP_FILE_DOWNLOAD, STREAM_HTTP_FILE_INPUT_DESC, this.optionStreamHttpFileInput);
+
+        this.optionStreamHttpFileInput = convertPropertyToBooleanAndWriteBack(STRING_STREAM_HTTP_FILE_DOWNLOAD);
 
         /*
          * Additional Properties.  These values can be passed to the templates and
@@ -232,6 +241,12 @@ public class CppUE4ClientCodegen extends AbstractCppCodegen {
             setOptionalProjectFileFlag(convertPropertyToBooleanAndWriteBack(CodegenConstants.OPTIONAL_PROJECT_FILE));
         } else {
             additionalProperties.put(CodegenConstants.OPTIONAL_PROJECT_FILE, optionalProjectFileFlag);
+        }
+
+        if (additionalProperties.containsKey(STRING_STREAM_HTTP_FILE_DOWNLOAD)) {
+            this.optionStreamHttpFileInput = convertPropertyToBooleanAndWriteBack(STRING_STREAM_HTTP_FILE_DOWNLOAD);
+        } else {
+            additionalProperties.put(STRING_STREAM_HTTP_FILE_DOWNLOAD, this.optionStreamHttpFileInput);
         }
 
         if (updateSupportingFiles) {
@@ -606,6 +621,27 @@ public class CppUE4ClientCodegen extends AbstractCppCodegen {
         if ("HttpFileInput".equals(op.returnType)) {
             addHeaders(methodResponse, op.responseHeaders);
             op.vendorExtensions.put("x-support-http-file-input", true);
+        }
+    }
+
+    @Override
+    protected void updateEnumVarsWithExtensions(List<Map<String, Object>> enumVars, Map<String, Object> vendorExtensions, String dataType) {
+        super.updateEnumVarsWithExtensions(enumVars, vendorExtensions, dataType);
+        if (vendorExtensions != null) {
+            updateEnumVarsWithOgenExtension(enumVars, vendorExtensions, dataType);
+        }
+    }
+
+    private static final String OGEN_ENUM_EXTENSION = "x-ogen-enum-naming";
+    private void updateEnumVarsWithOgenExtension(List<Map<String, Object>> enumVars, Map<String, Object> vendorExtensions, String dataType){
+        if (vendorExtensions.containsKey(OGEN_ENUM_EXTENSION)) {
+            Map<String, String> values = (Map<String, String>) vendorExtensions.get(OGEN_ENUM_EXTENSION);
+            int size = Math.min(enumVars.size(), values.size());
+            for (int i = 0; i < size; i++) {
+                String varName = toEnumVarName(values.get(enumVars.get(i).get("value")).split("_")[1], dataType);
+                enumVars.get(i).put("name", varName);
+                enumVars.get(i).put("isInteger", "int32".equals(dataType));
+            }
         }
     }
 }
